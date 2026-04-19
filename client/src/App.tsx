@@ -6,7 +6,10 @@ import './App.css';
 import batsmanImg from './assets/batsman.webp';
 import bowlerImg from './assets/bowler.webp';
 
-const socket = io(import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001');
+const socket = io(import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001', {
+  transports: ['websocket'],
+  upgrade: false
+});
 
 function App() {
   const [auctions, setAuctions] = useState<any[]>([]);

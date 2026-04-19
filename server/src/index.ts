@@ -11,14 +11,18 @@ const __dirname = path.dirname(__filename);
 const DATA_FILE = path.join(__dirname, 'data', 'auctions_v2.json');
 
 const app = express();
-app.use(cors({ origin: '*' }));
+// Enable CORS for all routes
+app.use(cors());
+
+// Add a health check endpoint
+app.get('/', (req, res) => res.send('Auction Server is Running'));
+app.get('/health', (req, res) => res.status(200).send('OK'));
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, { 
   cors: { 
-    origin: '*',
-    methods: ["GET", "POST"],
-    credentials: true
+    origin: "*",
+    methods: ["GET", "POST"]
   } 
 });
 
