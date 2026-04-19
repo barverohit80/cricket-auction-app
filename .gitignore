@@ -1,0 +1,9 @@
+node_modules/
+.DS_Store
+.env
+dist/
+build/
+*.log
+auction.json
+auctions_v2.json
+.idea/
