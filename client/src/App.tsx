@@ -304,10 +304,10 @@ function App() {
   }
 
   // Report View
-  if (state.isEnded || (role === 'admin' && adminView === 'report')) {
+  if (state.isEnded) {
     return (
       <div className="report-screen">
-        <header><h1>{state.isEnded ? 'AUCTION COMPLETED' : 'PREVIOUS AUCTION REPORT'}</h1><div className="header-actions">{role === 'admin' && <button onClick={() => setAdminView('menu')}>Back to Hub</button>}<button onClick={logout}>Logout</button></div></header>
+        <header><h1>AUCTION COMPLETED</h1><div className="header-actions">{role === 'admin' && <button onClick={() => setAdminView('menu')}>Back to Hub</button>}<button onClick={logout}>Logout</button></div></header>
         <div className="report-grid">
           {teams.map((t: any) => (
             <div key={t.id} className="team-report-card">
