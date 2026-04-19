@@ -103,7 +103,7 @@ function App() {
 
   if (!role) return (
     <div className="login-screen">
-      <h1>{data?.state.tournamentName || 'CRICKET AUCTION 2026'}</h1>
+      <h1>Welcome to Auction</h1>
       <div className="login-box">
         {loginStep === 'main' && (
           <div className="main-actions animate-fade-in">
@@ -120,21 +120,46 @@ function App() {
           <div className="auction-select animate-fade-in">
             <div className="box-header">
               <button className="back-btn" onClick={() => setLoginStep('main')}>← Back</button>
-              <h3>Ongoing Auctions</h3>
+              <h3>Select Tournament</h3>
+            </div>
+            <div className="search-box">
+              <input 
+                placeholder="Search Tournament..." 
+                onChange={(e) => {
+                  const val = e.target.value.toLowerCase();
+                  const items = document.querySelectorAll('.auction-item-card');
+                  items.forEach((item: any) => {
+                    const name = item.querySelector('h4').innerText.toLowerCase();
+                    item.style.display = name.includes(val) ? 'flex' : 'none';
+                  });
+                }}
+              />
             </div>
             <div className="auction-list">
-              {auctions.map(a => (
-                <button key={a.id} className="auction-item-card" onClick={() => { socket.emit('select_auction', a.id); setLoginStep('teams'); }}>
+              {auctions.slice().sort((a,b) => Number(b.id) - Number(a.id)).map(a => (
+                <button 
+                  key={a.id} 
+                  className={`auction-item-card ${a.isEnded ? 'completed' : 'live'}`} 
+                  onClick={() => { 
+                    socket.emit('select_auction', a.id); 
+                    if (a.isEnded) {
+                      setLoginStep('main'); // Just clear step, sync_all will handle role-based report
+                    } else {
+                      setLoginStep('teams'); 
+                    }
+                  }}
+                >
                   <div className="auc-info">
-                    <span className="status-dot"></span>
+                    <span className={`status-dot ${a.isEnded ? 'gray' : 'green'}`}></span>
                     <div className="auc-details">
                       <h4>{a.name}</h4>
+                      <p>{a.isEnded ? 'AUCTION COMPLETED' : 'LIVE AUCTION'}</p>
                     </div>
                   </div>
-                  <span className="chevron">→</span>
+                  <span className="chevron">{a.isEnded ? 'View Results' : 'Join'} →</span>
                 </button>
               ))}
-              {auctions.length === 0 && <p className="empty-msg">No active auctions.</p>}
+              {auctions.length === 0 && <p className="empty-msg">No tournaments found.</p>}
             </div>
           </div>
         )}
