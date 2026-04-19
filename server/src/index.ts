@@ -125,7 +125,7 @@ io.on('connection', (socket) => {
   
   const active = getActiveAuction();
   socket.emit('sync_all', { 
-    auctions: auctions.map(a => ({ id: a.id, name: a.name })), 
+    auctions: auctions.map(a => ({ id: a.id, name: a.name, isEnded: a.state.isEnded })), 
     activeAuction: active 
   });
 
@@ -243,10 +243,11 @@ io.on('connection', (socket) => {
       active.state.bidderId = null;
       active.state.timer = 30;
       active.state.isPaused = true;
-      if (interval) clearInterval(interval);
     } else {
       active.state.isEnded = true;
+      active.state.isPaused = true;
     }
+    if (interval) clearInterval(interval);
     save();
     emitSync();
   });
