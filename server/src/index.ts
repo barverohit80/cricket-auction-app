@@ -11,10 +11,16 @@ const __dirname = path.dirname(__filename);
 const DATA_FILE = path.join(__dirname, 'data', 'auctions_v2.json');
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: '*' }));
 
 const httpServer = createServer(app);
-const io = new Server(httpServer, { cors: { origin: '*' } });
+const io = new Server(httpServer, { 
+  cors: { 
+    origin: '*',
+    methods: ["GET", "POST"],
+    credentials: true
+  } 
+});
 
 interface AuctionData {
   id: string;
