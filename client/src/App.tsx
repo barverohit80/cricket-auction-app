@@ -209,12 +209,18 @@ function App() {
             <div className="list-section">
                 <h3>Existing Auctions</h3>
                 <div className="scroll-list">
-                    {auctions.map(a => (
-                        <div key={a.id} className="list-item">
-                            <span>{a.name}</span>
-                            <button onClick={() => socket.emit('select_auction', a.id)}>Select</button>
+                    {auctions.slice().sort((a,b) => Number(b.id) - Number(a.id)).map(a => (
+                        <div key={a.id} className={`list-item clickable-item ${a.isEnded ? 'ended' : 'active'}`} onClick={() => socket.emit('select_auction', a.id)}>
+                            <div className="item-main">
+                                <span className="item-name">{a.name}</span>
+                                <span className={`item-status ${a.isEnded ? 'status-ended' : 'status-active'}`}>
+                                    {a.isEnded ? 'COMPLETED' : 'INCOMPLETE'}
+                                </span>
+                            </div>
+                            <span className="item-arrow">→</span>
                         </div>
                     ))}
+                    {auctions.length === 0 && <p className="empty-msg" style={{padding: '1rem'}}>No auctions found.</p>}
                 </div>
             </div>
         </div>
