@@ -372,17 +372,15 @@ function MainApp() {
     return () => { socket.off('sync_all'); socket.off('error_msg'); };
   }, []);
 
-  // Effect to handle navigation when data is selected/created
+  // Effect to handle navigation when data is selected/created/deleted
   useEffect(() => {
-    if (data?.id) {
+    if (!data) {
        const path = window.location.pathname;
-       if (path === '/') {
-          // Stay on login for owner flow until team is selected
-       } else if (path === '/hub') {
-          // Stay on hub if just viewing list
+       if (path.startsWith('/auction/') || path.startsWith('/setup/')) {
+          navigate('/hub');
        }
     }
-  }, [data?.id]);
+  }, [data, navigate]);
 
   return (
     <Routes>

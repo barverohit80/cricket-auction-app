@@ -326,7 +326,7 @@ io.on('connection', (socket) => {
 
   socket.on('delete_auction', (id) => {
     auctions = auctions.filter(a => a.id !== id);
-    if (activeAuctionId === id) activeAuctionId = auctions.length > 0 ? auctions[0].id : null;
+    if (activeAuctionId === id) activeAuctionId = null;
     save();
     emitSync();
   });

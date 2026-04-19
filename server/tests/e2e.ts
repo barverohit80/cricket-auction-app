@@ -10,10 +10,15 @@ async function runTests() {
   
   let auctionId = '';
 
-  const waitForSync = (condition: (data: any) => boolean): Promise<any> => {
-    return new Promise((resolve) => {
+  const waitForSync = (condition: (data: any) => boolean, timeout = 5000): Promise<any> => {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        admin.off('sync_all', handler);
+        reject(new Error('Sync Timeout'));
+      }, timeout);
       const handler = (data: any) => {
         if (condition(data)) {
+          clearTimeout(timer);
           admin.off('sync_all', handler);
           resolve(data);
         }
@@ -65,6 +70,13 @@ async function runTests() {
   admin.emit('mark_completed');
   await waitForSync(d => d.activeAuction?.state.isEnded === true);
   console.log('✅ Marked Completed');
+
+  // 9. Delete Auction
+  console.log('Testing Deletion');
+  await new Promise(r => setTimeout(r, 500)); // Short delay for persistence
+  admin.emit('delete_auction', auctionId);
+  await waitForSync(d => d.activeAuction === null);
+  console.log('✅ Delete Verified: activeAuction is null');
 
   console.log('--- ALL E2E TESTS PASSED ---');
   process.exit(0);
