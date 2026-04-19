@@ -1109,3 +1109,38 @@ main { display: flex; flex: 1; overflow: hidden; }
     padding: 0.6rem;
   }
 }
+
+/* Auction Selection Enhancements */
+.search-box {
+  margin-bottom: 1.5rem;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 0.8rem;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: white;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+}
+
+.status-dot.gray {
+  background: #64748b;
+  box-shadow: none;
+  animation: none;
+}
+
+.auction-item-card.completed {
+  border-left: 4px solid #64748b;
+  opacity: 0.8;
+}
+
+.auction-item-card.completed:hover {
+  opacity: 1;
+  border-color: #94a3b8;
+}
+
+.auction-item-card.live {
+  border-left: 4px solid var(--success);
+}

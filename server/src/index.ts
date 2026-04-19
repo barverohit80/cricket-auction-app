@@ -72,7 +72,7 @@ const emitSync = () => {
   const active = getActiveAuction();
   console.log('[SERVER] Syncing. Active:', active?.name || 'NONE');
   io.emit('sync_all', { 
-    auctions: auctions.map(a => ({ id: a.id, name: a.name })), 
+    auctions: auctions.map(a => ({ id: a.id, name: a.name, isEnded: a.state.isEnded })), 
     activeAuction: active 
   });
 };
@@ -306,6 +306,17 @@ io.on('connection', (socket) => {
         if (oldTeam) { oldTeam.budget += p.soldPrice || 0; oldTeam.squad = oldTeam.squad.filter(id => id !== p.id); }
       }
       p.status = 'Unsold'; p.soldPrice = undefined; p.teamId = undefined; active.state.isPaused = true;
+      if (interval) clearInterval(interval);
+      save();
+      emitSync();
+    }
+  });
+
+  socket.on('mark_completed', () => {
+    const active = getActiveAuction();
+    if (active) {
+      active.state.isEnded = true;
+      active.state.isPaused = true;
       if (interval) clearInterval(interval);
       save();
       emitSync();

@@ -223,14 +223,19 @@ function App() {
           <button className="logout-btn" onClick={logout}>Logout</button>
         </header>
         <div className="dashboard-grid">
-          <button className="dash-card" onClick={() => setAdminView('report')}>
-            <span className="dash-icon">📊</span><h2>Last Completed Auction</h2>
+          <button className="dash-card" onClick={() => setAdminView('setup')}>
+            <span className="dash-icon">⚙️</span><h2>SETUP</h2>
           </button>
-          <button className="dash-card" onClick={() => setAdminView('live')}>
-            <span className="dash-icon">⚡</span><h2>Resume Ongoing Auction</h2>
+          {!state.isEnded && (
+            <button className="dash-card" onClick={() => setAdminView('live')}>
+              <span className="dash-icon">⚡</span><h2>RESUME AUCTION</h2>
+            </button>
+          )}
+          <button className="dash-card" onClick={() => { if(window.confirm("End this auction?")) socket.emit('mark_completed'); }}>
+            <span className="dash-icon">🏁</span><h2>MARK COMPLETED</h2>
           </button>
           <button className="dash-card warning" onClick={() => setData(null)}>
-            <span className="dash-icon">🆕</span><h2>Create / Manage Auctions</h2>
+            <span className="dash-icon">🆕</span><h2>BACK TO HUB</h2>
           </button>
         </div>
       </div>
