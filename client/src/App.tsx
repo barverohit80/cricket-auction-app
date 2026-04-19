@@ -19,7 +19,7 @@ function App() {
   const [tBudget, setTBudget] = useState(0);
   const [pName, setPName] = useState('');
   const [pRole, setPRole] = useState('Batsman');
-  const [pSet, setPSet] = useState('Set 1');
+  const [pSet] = useState('Set 1');
   const [pBase, setPBase] = useState(5000);
   const [newAuctionName, setNewAuctionName] = useState('');
 
