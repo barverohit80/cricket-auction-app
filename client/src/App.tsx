@@ -234,8 +234,8 @@ function App() {
           <button className="dash-card" onClick={() => { if(window.confirm("End this auction?")) socket.emit('mark_completed'); }}>
             <span className="dash-icon">🏁</span><h2>MARK COMPLETED</h2>
           </button>
-          <button className="dash-card warning" onClick={() => setData(null)}>
-            <span className="dash-icon">🆕</span><h2>BACK TO HUB</h2>
+          <button className="dash-card warning" onClick={() => { if(window.confirm("ARE YOU SURE? This will permanently DELETE this tournament and all its data!")) { socket.emit('delete_auction', data.id); setData(null); } }}>
+            <span className="dash-icon">🗑️</span><h2>DELETE TOURNAMENT</h2>
           </button>
         </div>
       </div>
