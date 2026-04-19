@@ -256,6 +256,37 @@ function App() {
 
   // Auctioneer Menu
   if (role === 'admin' && adminView === 'menu') {
+    return (
+      <div className="admin-dashboard">
+        <header>
+          <div className="logo-section">
+              <button className="back-hub-btn" onClick={() => setData(null)}>← HUB</button>
+              <h1>{state.tournamentName}</h1>
+          </div>
+          <button className="logout-btn" onClick={logout}>Logout</button>
+        </header>
+        <div className="dashboard-grid">
+          {!state.isEnded && (
+            <>
+              <button className="dash-card" onClick={() => setAdminView('setup')}>
+                <span className="dash-icon">⚙️</span><h2>SETUP</h2>
+              </button>
+              <button className="dash-card" onClick={() => setAdminView('live')}>
+                <span className="dash-icon">⚡</span><h2>RESUME AUCTION</h2>
+              </button>
+              <button className="dash-card" onClick={() => { if(window.confirm("End this auction?")) socket.emit('mark_completed'); }}>
+                <span className="dash-icon">🏁</span><h2>MARK COMPLETED</h2>
+              </button>
+            </>
+          )}
+          {state.isEnded && (
+            <button className="dash-card" onClick={() => setAdminView('report')}>
+              <span className="dash-icon">📊</span><h2>VIEW REPORT</h2>
+            </button>
+          )}
+          <button className="dash-card warning" onClick={() => { if(window.confirm("ARE YOU SURE? This will permanently DELETE this tournament and all its data!")) { socket.emit('delete_auction', data.id); setData(null); } }}>
+            <span className="dash-icon">🗑️</span><h2>DELETE TOURNAMENT</h2>
+          </button>
         </div>
       </div>
     );
