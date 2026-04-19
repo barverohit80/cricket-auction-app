@@ -952,3 +952,160 @@ main { display: flex; flex: 1; overflow: hidden; }
 
 .max-bid-info b { color: var(--accent); }
 .max-bid-info small { display: block; font-size: 0.75rem; margin-top: 0.2rem; opacity: 0.8; }
+
+/* Mobile Responsiveness */
+@media (max-width: 1024px) {
+  .setup-container {
+    grid-template-columns: 1fr;
+    max-height: none;
+    overflow: visible;
+  }
+  .setup-forms {
+    max-height: none;
+    overflow: visible;
+  }
+  .setup-lists {
+    grid-template-columns: 1fr;
+  }
+  .list-section {
+    max-height: 400px;
+  }
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  main {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .auction-main {
+    padding: 1rem;
+    flex: none;
+  }
+
+  .sidebar {
+    flex: none;
+    max-width: none;
+    border-left: none;
+    border-top: 1px solid #334155;
+    padding: 1.5rem;
+  }
+
+  .live-card {
+    padding: 1.5rem;
+    width: 100%;
+  }
+
+  .player-profile {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .player-avatar {
+    width: 160px;
+    height: 160px;
+  }
+
+  .player-title h3 {
+    font-size: 2.5rem;
+  }
+
+  .bid-dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-box {
+    padding: 1rem;
+  }
+
+  .stat-box .val {
+    font-size: 1.5rem;
+  }
+
+  .bid-controls {
+    flex-wrap: wrap;
+  }
+
+  .bid-controls button {
+    flex: 1 1 40%;
+    padding: 0.8rem;
+  }
+
+  .login-screen h1 {
+    font-size: 2rem;
+    letter-spacing: 2px;
+  }
+
+  .login-box {
+    padding: 1.5rem;
+    width: 90%;
+  }
+
+  .main-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+  }
+
+  .modal-content {
+    max-width: 100%;
+    height: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .modal-overlay {
+    padding: 0;
+  }
+
+  .roster-grid, .unsold-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  header {
+    padding: 0.8rem 1rem;
+  }
+  
+  header h1 {
+    font-size: 1rem;
+  }
+  
+  .back-hub-btn {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+    margin-right: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .player-avatar {
+    width: 140px;
+    height: 140px;
+  }
+
+  .player-title h3 {
+    font-size: 2rem;
+  }
+
+  .modern-timer {
+    width: 60px;
+    height: 60px;
+  }
+
+  .timer-value {
+    font-size: 1.2rem;
+  }
+
+  .bid-controls button {
+    font-size: 0.9rem;
+    padding: 0.6rem;
+  }
+}
