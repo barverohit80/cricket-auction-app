@@ -128,7 +128,7 @@ function App() {
       <div className="login-box">
         {loginStep === 'main' && (
           <div className="main-actions animate-fade-in">
-            <button className="auction-btn" onClick={() => { login('admin'); setAdminView('menu'); }}>
+            <button className="auction-btn" onClick={() => { setData(null); login('admin'); setAdminView('menu'); }}>
               <span className="icon">🎤</span>AUCTIONEER
             </button>
             <button className="owner-btn" onClick={() => setLoginStep('auctions')}>
