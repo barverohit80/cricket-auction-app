@@ -91,7 +91,13 @@ function App() {
     socket.on('auction_selected', () => setAdminView('menu'));
     socket.on('tick', (t) => setData((prev: any) => prev ? { ...prev, state: { ...prev.state, timer: t } } : null));
     socket.on('error_msg', (msg) => alert(msg));
-    return () => { socket.off('sync_all'); socket.off('tick'); socket.off('error_msg'); };
+    return () => { 
+      socket.off('sync_all'); 
+      socket.off('tick'); 
+      socket.off('error_msg'); 
+      socket.off('auction_created');
+      socket.off('auction_selected');
+    };
   }, []);
 
   const login = (r: string, tid?: string) => {
@@ -332,6 +338,15 @@ function App() {
         </div>
         <div className="sidebar">
           <div className="status-panel"><h3>Quick View</h3><div className="utility-grid"><button className="sidebar-btn sold" onClick={() => setShowSoldModal(true)}>SOLD PLAYERS</button><button className="sidebar-btn unsold" onClick={() => setShowUnsoldModal(true)}>UNSOLD LIST</button><button className="sidebar-btn rosters" onClick={() => setShowRosterModal(true)}>TEAM ROSTERS</button><button className="sidebar-btn upcoming" onClick={() => setShowUpcomingModal(true)}>UPCOMING</button></div></div>
+          <div className="status-panel"><h3>Current Team Status</h3><div className="sold-players-list">{teams.map((t: any) => (<div key={t.id} className="sold-item"><div style={{display: 'flex', flexDirection: 'column'}}><span>{t.name}</span><small style={{fontSize: '0.7rem', color: t.squad.length >= state.playersPerTeam ? '#ef4444' : '#64748b'}}>Squad: {t.squad.length}/{state.playersPerTeam}</small></div><b>{formatK(t.budget)}</b></div>))}</div></div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+export default App;
+AYERS</button><button className="sidebar-btn unsold" onClick={() => setShowUnsoldModal(true)}>UNSOLD LIST</button><button className="sidebar-btn rosters" onClick={() => setShowRosterModal(true)}>TEAM ROSTERS</button><button className="sidebar-btn upcoming" onClick={() => setShowUpcomingModal(true)}>UPCOMING</button></div></div>
           <div className="status-panel"><h3>Current Team Status</h3><div className="sold-players-list">{teams.map((t: any) => (<div key={t.id} className="sold-item"><div style={{display: 'flex', flexDirection: 'column'}}><span>{t.name}</span><small style={{fontSize: '0.7rem', color: t.squad.length >= state.playersPerTeam ? '#ef4444' : '#64748b'}}>Squad: {t.squad.length}/{state.playersPerTeam}</small></div><b>{formatK(t.budget)}</b></div>))}</div></div>
         </div>
       </main>
