@@ -230,141 +230,12 @@ function App() {
   const { players, teams, state } = data;
   const currentP = players[state.currentPlayerIdx];
 
-  // Auctioneer Menu
-  if (role === 'admin' && adminView === 'menu') {
-    return (
-      <div className="admin-dashboard">
-        <header>
-          <div className="logo-section">
-              <button className="back-hub-btn" onClick={() => setData(null)}>← HUB</button>
-              <h1>{state.tournamentName}</h1>
-          </div>
-          <button className="logout-btn" onClick={logout}>Logout</button>
-        </header>
-        <div className="dashboard-grid">
-          {!state.isEnded && (
-            <>
-              <button className="dash-card" onClick={() => setAdminView('setup')}>
-                <span className="dash-icon">⚙️</span><h2>SETUP</h2>
-              </button>
-              <button className="dash-card" onClick={() => setAdminView('live')}>
-                <span className="dash-icon">⚡</span><h2>RESUME AUCTION</h2>
-              </button>
-              <button className="dash-card" onClick={() => { if(window.confirm("End this auction?")) socket.emit('mark_completed'); }}>
-                <span className="dash-icon">🏁</span><h2>MARK COMPLETED</h2>
-              </button>
-            </>
-          )}
-          {state.isEnded && (
-            <button className="dash-card" onClick={() => setAdminView('report')}>
-              <span className="dash-icon">📊</span><h2>VIEW REPORT</h2>
-            </button>
-          )}
-          <button className="dash-card warning" onClick={() => { if(window.confirm("ARE YOU SURE? This will permanently DELETE this tournament and all its data!")) { socket.emit('delete_auction', data.id); setData(null); } }}>
-            <span className="dash-icon">🗑️</span><h2>DELETE TOURNAMENT</h2>
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Setup View
-  if (role === 'admin' && adminView === 'setup') {
-    return (
-      <div className="setup-screen">
-        <header>
-          <button className="back-hub-btn" onClick={() => setAdminView('menu')}>← HUB</button>
-          <h1>AUCTION SETUP</h1>
-          <button className="start-now-btn" onClick={() => { if(players.length > 0) { socket.emit('next'); setAdminView('live'); } else { alert('Add at least one player'); } }}>
-            START AUCTION 🚀
-          </button>
-        </header>
-
-        <div className="setup-container">
-          <div className="setup-forms">
-            <div className="setup-card">
-              <h3>Auction Settings</h3>
-              <div className="form-group">
-                <label style={{fontSize: '0.8rem', color: '#64748b'}}>Tournament Name</label>
-                <input type="text" value={state.tournamentName} readOnly style={{opacity: 0.7}} />
-                <label style={{fontSize: '0.8rem', color: '#64748b'}}>Players Per Team Squad</label>
-                <select value={state.playersPerTeam} onChange={e => socket.emit('update_settings', { playersPerTeam: Number(e.target.value) })}>
-                   {[5,6,7,8,9,10,11].map(n => <option key={n} value={n}>{n} Players</option>)}
-                </select>
-                <label style={{fontSize: '0.8rem', color: '#64748b'}}>Default Budget Per Team (₹)</label>
-                <input type="number" value={state.budgetPerTeam} onChange={e => { socket.emit('update_settings', { budgetPerTeam: Number(e.target.value) }); setTBudget(Number(e.target.value)); }} />
-              </div>
-            </div>
-
-            <div className="setup-card">
-              <h3>{editingTeam ? 'Edit Team' : 'Add Team'}</h3>
-              <div className="form-group">
-                <input placeholder="Team Name" value={tName} onChange={e => setTName(e.target.value)} />
-                <input type="number" placeholder="Budget" value={tBudget} readOnly style={{opacity: 0.7, cursor: 'not-allowed'}} />
-                {editingTeam ? (
-                  <div className="edit-actions">
-                    <button onClick={() => { socket.emit('edit_team', { id: editingTeam.id, name: tName, initialBudget: tBudget }); setEditingTeam(null); setTName(''); setTBudget(0); }}>Save</button>
-                    <button className="cancel-btn" onClick={() => { setEditingTeam(null); setTName(''); setTBudget(0); }}>Cancel</button>
-                  </div>
-                ) : (
-                  <button onClick={() => { socket.emit('add_team', { id: Date.now().toString(), name: tName, initialBudget: tBudget }); setTName(''); }}>Add Team</button>
-                )}
-              </div>
-            </div>
-
-            <div className="setup-card">
-              <h3>Add Player</h3>
-              <div className="form-group">
-                <div className="bulk-upload-section">
-                  <label style={{fontSize: '0.8rem', color: '#64748b'}}>Bulk Upload (Excel)</label>
-                  <input type="file" accept=".xlsx, .xls" onChange={handleFileUpload} style={{fontSize: '0.8rem', padding: '0.4rem'}} />
-                </div>
-                <hr style={{border: 'none', borderTop: '1px solid rgba(255,255,255,0.05)', margin: '0.5rem 0'}} />
-                <input placeholder="Player Name" value={pName} onChange={e => setPName(e.target.value)} />
-                <select value={pRole} onChange={e => setPRole(e.target.value)}>
-                  <option>Batsman</option><option>Bowler</option><option>All-rounder</option><option>Wicketkeeper</option>
-                </select>
-                <input placeholder="Base Price" type="number" value={pBase} onChange={e => setPBase(Number(e.target.value))} />
-                <button onClick={() => { socket.emit('add_player', { id: Date.now().toString(), name: pName, role: pRole, setId: pSet, basePrice: pBase }); setPName(''); }}>Add Player</button>
-              </div>
-            </div>
-          </div>
-
-          <div className="setup-lists">
-            <div className="list-section">
-              <h3>Added Teams ({teams.length})</h3>
-              <div className="scroll-list">
-                {teams.map((t:any) => (
-                  <div key={t.id} className="list-item">
-                    <div className="item-info"><span>{t.name}</span><b>{formatK(t.budget)}</b></div>
-                    <button className="edit-icon-btn" onClick={() => { setEditingTeam(t); setTName(t.name); setTBudget(t.initialBudget); }}>✏️</button>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="list-section">
-              <h3>Added Players ({players.length})</h3>
-              <div className="scroll-list">
-                {players.map((p:any) => (
-                  <div key={p.id} className="list-item">
-                    <span>{p.name} ({p.role})</span>
-                    <div style={{display: 'flex', gap: '0.5rem', alignItems: 'center'}}><b>{formatK(p.basePrice)}</b><button className="remove-btn-icon" onClick={() => { if(confirm(`Remove ${p.name}?`)) socket.emit('remove_player', { id: p.id }); }}>🗑️</button></div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Report View
-  if (state.isEnded) {
+  // Report View - Highest priority if ended
+  if (state.isEnded || (role === 'admin' && adminView === 'report')) {
     return (
       <div className="report-screen">
         <header>
-          <h1>AUCTION COMPLETED</h1>
+          <h1>{state.isEnded ? 'AUCTION COMPLETED' : 'AUCTION REPORT'}</h1>
           <div className="header-actions">
             <button className="download-btn" onClick={downloadPDF}>Download PDF 📥</button>
             {role === 'admin' && <button onClick={() => setAdminView('menu')}>Back to Hub</button>}
@@ -378,6 +249,13 @@ function App() {
               <div className="squad-list">{players.filter((p:any) => p.teamId === t.id).map((p:any) => (<div key={p.id} className="squad-item"><span>{p.name} ({p.role})</span><b>{formatK(p.soldPrice || 0)}</b></div>))}</div>
             </div>
           ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Auctioneer Menu
+  if (role === 'admin' && adminView === 'menu') {
         </div>
       </div>
     );
