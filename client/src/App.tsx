@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import * as XLSX from 'xlsx';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 import './App.css';
 
 import batsmanImg from './assets/batsman.webp';
@@ -117,7 +119,7 @@ function App() {
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
     pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-    pdf.save(`${state.tournamentName}_Report.pdf`);
+    pdf.save(`${data.name}_Report.pdf`);
   };
 
   if (!role) return (
@@ -162,7 +164,7 @@ function App() {
                   onClick={() => { 
                     socket.emit('select_auction', a.id); 
                     if (a.isEnded) {
-                      setLoginStep('main'); // Just clear step, sync_all will handle role-based report
+                      setLoginStep('main'); 
                     } else {
                       setLoginStep('teams'); 
                     }
@@ -236,15 +238,38 @@ function App() {
   const { players, teams, state } = data;
   const currentP = players[state.currentPlayerIdx];
 
-  // Report View - Highest priority if ended
-  if (state.isEnded || (role === 'admin' && adminView === 'report')) {
+  // Report View - Only auto-show for non-admins if ended, or if admin explicitly selects report
+  if (state.isEnded && role !== 'admin') {
+    return (
+      <div className="report-screen">
+        <header>
+          <h1>AUCTION COMPLETED</h1>
+          <div className="header-actions">
+            <button className="download-btn" onClick={downloadPDF}>Download PDF 📥</button>
+            <button onClick={logout}>Logout</button>
+          </div>
+        </header>
+        <div className="report-grid" id="report-content">
+          {teams.map((t: any) => (
+            <div key={t.id} className="team-report-card">
+              <h2>{t.name}</h2><p className="purse">Remaining Purse: {formatK(t.budget)}</p>
+              <div className="squad-list">{players.filter((p:any) => p.teamId === t.id).map((p:any) => (<div key={p.id} className="squad-item"><span>{p.name} ({p.role})</span><b>{formatK(p.soldPrice || 0)}</b></div>))}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Admin forced report view
+  if (role === 'admin' && adminView === 'report') {
     return (
       <div className="report-screen">
         <header>
           <h1>{state.isEnded ? 'AUCTION COMPLETED' : 'AUCTION REPORT'}</h1>
           <div className="header-actions">
             <button className="download-btn" onClick={downloadPDF}>Download PDF 📥</button>
-            {role === 'admin' && <button onClick={() => setAdminView('menu')}>Back to Hub</button>}
+            <button onClick={() => setAdminView('menu')}>Back to Hub</button>
             <button onClick={logout}>Logout</button>
           </div>
         </header>
@@ -298,9 +323,99 @@ function App() {
     );
   }
 
+  // Setup View
+  if (role === 'admin' && adminView === 'setup') {
+    return (
+      <div className="setup-screen">
+        <header>
+          <button className="back-hub-btn" onClick={() => setAdminView('menu')}>← HUB</button>
+          <h1>AUCTION SETUP</h1>
+          <button className="start-now-btn" onClick={() => { if(players.length > 0) { socket.emit('next'); setAdminView('live'); } else { alert('Add at least one player'); } }}>
+            START AUCTION 🚀
+          </button>
+        </header>
+
+        <div className="setup-container">
+          <div className="setup-forms">
+            <div className="setup-card">
+              <h3>Auction Settings</h3>
+              <div className="form-group">
+                <label style={{fontSize: '0.8rem', color: '#64748b'}}>Tournament Name</label>
+                <input type="text" value={state.tournamentName} readOnly style={{opacity: 0.7}} />
+                <label style={{fontSize: '0.8rem', color: '#64748b'}}>Players Per Team Squad</label>
+                <select value={state.playersPerTeam} onChange={e => socket.emit('update_settings', { playersPerTeam: Number(e.target.value) })}>
+                   {[5,6,7,8,9,10,11].map(n => <option key={n} value={n}>{n} Players</option>)}
+                </select>
+                <label style={{fontSize: '0.8rem', color: '#64748b'}}>Default Budget Per Team (₹)</label>
+                <input type="number" value={state.budgetPerTeam} onChange={e => { socket.emit('update_settings', { budgetPerTeam: Number(e.target.value) }); setTBudget(Number(e.target.value)); }} />
+              </div>
+            </div>
+
+            <div className="setup-card">
+              <h3>{editingTeam ? 'Edit Team' : 'Add Team'}</h3>
+              <div className="form-group">
+                <input placeholder="Team Name" value={tName} onChange={e => setTName(e.target.value)} />
+                <input type="number" placeholder="Budget" value={tBudget} readOnly style={{opacity: 0.7, cursor: 'not-allowed'}} />
+                {editingTeam ? (
+                  <div className="edit-actions">
+                    <button onClick={() => { socket.emit('edit_team', { id: editingTeam.id, name: tName, initialBudget: tBudget }); setEditingTeam(null); setTName(''); setTBudget(0); }}>Save</button>
+                    <button className="cancel-btn" onClick={() => { setEditingTeam(null); setTName(''); setTBudget(0); }}>Cancel</button>
+                  </div>
+                ) : (
+                  <button onClick={() => { socket.emit('add_team', { id: Date.now().toString(), name: tName, initialBudget: tBudget }); setTName(''); }}>Add Team</button>
+                )}
+              </div>
+            </div>
+
+            <div className="setup-card">
+              <h3>Add Player</h3>
+              <div className="form-group">
+                <div className="bulk-upload-section">
+                  <label style={{fontSize: '0.8rem', color: '#64748b'}}>Bulk Upload (Excel)</label>
+                  <input type="file" accept=".xlsx, .xls" onChange={handleFileUpload} style={{fontSize: '0.8rem', padding: '0.4rem'}} />
+                </div>
+                <hr style={{border: 'none', borderTop: '1px solid rgba(255,255,255,0.05)', margin: '0.5rem 0'}} />
+                <input placeholder="Player Name" value={pName} onChange={e => setPName(e.target.value)} />
+                <select value={pRole} onChange={e => setPRole(e.target.value)}>
+                  <option>Batsman</option><option>Bowler</option><option>All-rounder</option><option>Wicketkeeper</option>
+                </select>
+                <input placeholder="Base Price" type="number" value={pBase} onChange={e => setPBase(Number(e.target.value))} />
+                <button onClick={() => { socket.emit('add_player', { id: Date.now().toString(), name: pName, role: pRole, setId: pSet, basePrice: pBase }); setPName(''); }}>Add Player</button>
+              </div>
+            </div>
+          </div>
+
+          <div className="setup-lists">
+            <div className="list-section">
+              <h3>Added Teams ({teams.length})</h3>
+              <div className="scroll-list">
+                {teams.map((t:any) => (
+                  <div key={t.id} className="list-item">
+                    <div className="item-info"><span>{t.name}</span><b>{formatK(t.budget)}</b></div>
+                    <button className="edit-icon-btn" onClick={() => { setEditingTeam(t); setTName(t.name); setTBudget(t.initialBudget); }}>✏️</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="list-section">
+              <h3>Added Players ({players.length})</h3>
+              <div className="scroll-list">
+                {players.map((p:any) => (
+                  <div key={p.id} className="list-item">
+                    <span>{p.name} ({p.role})</span>
+                    <div style={{display: 'flex', gap: '0.5rem', alignItems: 'center'}}><b>{formatK(p.basePrice)}</b><button className="remove-btn-icon" onClick={() => { if(confirm(`Remove ${p.name}?`)) socket.emit('remove_player', { id: p.id }); }}>🗑️</button></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="app-container">
-      {/* Modals ... same as before ... */}
       {showUnsoldModal && (<div className="modal-overlay" onClick={() => setShowUnsoldModal(false)}><div className="modal-content animate-fade-in" onClick={e => e.stopPropagation()}><div className="modal-header"><h2>Unsold Players</h2><button className="close-btn" onClick={() => setShowUnsoldModal(false)}>×</button></div><div className="modal-body"><div className="unsold-grid">{players.filter((p:any) => p.status === 'Unsold').map((p:any) => (<div key={p.id} className="unsold-card"><h4>{p.name}</h4><p>{p.role}</p><b>Base: {formatK(p.basePrice)}</b></div>))}{players.filter((p:any) => p.status === 'Unsold').length === 0 && <p className="empty-msg">No unsold players yet.</p>}</div></div></div></div>)}
       {showRosterModal && (<div className="modal-overlay" onClick={() => setShowRosterModal(false)}><div className="modal-content large animate-fade-in" onClick={e => e.stopPropagation()}><div className="modal-header"><h2>Team Roster Details</h2><button className="close-btn" onClick={() => setShowRosterModal(false)}>×</button></div><div className="modal-body"><div className="roster-grid">{teams.map((t:any) => (<div key={t.id} className="team-roster-card"><div className="roster-team-header"><div><h3>{t.name}</h3><div className={`squad-count ${t.squad.length >= state.playersPerTeam ? 'full' : ''}`}>SQUAD: {t.squad.length} / {state.playersPerTeam}</div></div><span className="roster-purse">Left: {formatK(t.budget)}</span></div><div className="roster-list">{players.filter((p:any) => p.teamId === t.id).map((p:any) => (<div key={p.id} className="roster-item"><span>{p.name} ({p.role.substring(0,3)})</span><b>{formatK(p.soldPrice || 0)}</b></div>))}{players.filter((p:any) => p.teamId === t.id).length === 0 && <p className="empty-msg">Empty Squad</p>}</div></div>))}</div></div></div></div>)}
       {showSoldModal && (<div className="modal-overlay" onClick={() => setShowSoldModal(false)}><div className="modal-content animate-fade-in" onClick={e => e.stopPropagation()}><div className="modal-header"><h2>Sold Players List</h2><button className="close-btn" onClick={() => setShowSoldModal(false)}>×</button></div><div className="modal-body"><div className="sold-players-full-list">{players.filter((p:any) => p.status === 'Sold').map((p:any) => (<div key={p.id} className="sold-item-row"><div className="sold-item-info"><strong>{p.name}</strong><span>{p.role}</span></div><div className="sold-item-buyer"><span>{teams.find((t:any)=>t.id === p.teamId)?.name}</span><b>{formatK(p.soldPrice || 0)}</b></div></div>))}{players.filter((p:any) => p.status === 'Sold').length === 0 && <p className="empty-msg">No players sold yet.</p>}</div></div></div></div>)}
@@ -338,15 +453,6 @@ function App() {
         </div>
         <div className="sidebar">
           <div className="status-panel"><h3>Quick View</h3><div className="utility-grid"><button className="sidebar-btn sold" onClick={() => setShowSoldModal(true)}>SOLD PLAYERS</button><button className="sidebar-btn unsold" onClick={() => setShowUnsoldModal(true)}>UNSOLD LIST</button><button className="sidebar-btn rosters" onClick={() => setShowRosterModal(true)}>TEAM ROSTERS</button><button className="sidebar-btn upcoming" onClick={() => setShowUpcomingModal(true)}>UPCOMING</button></div></div>
-          <div className="status-panel"><h3>Current Team Status</h3><div className="sold-players-list">{teams.map((t: any) => (<div key={t.id} className="sold-item"><div style={{display: 'flex', flexDirection: 'column'}}><span>{t.name}</span><small style={{fontSize: '0.7rem', color: t.squad.length >= state.playersPerTeam ? '#ef4444' : '#64748b'}}>Squad: {t.squad.length}/{state.playersPerTeam}</small></div><b>{formatK(t.budget)}</b></div>))}</div></div>
-        </div>
-      </main>
-    </div>
-  );
-}
-
-export default App;
-AYERS</button><button className="sidebar-btn unsold" onClick={() => setShowUnsoldModal(true)}>UNSOLD LIST</button><button className="sidebar-btn rosters" onClick={() => setShowRosterModal(true)}>TEAM ROSTERS</button><button className="sidebar-btn upcoming" onClick={() => setShowUpcomingModal(true)}>UPCOMING</button></div></div>
           <div className="status-panel"><h3>Current Team Status</h3><div className="sold-players-list">{teams.map((t: any) => (<div key={t.id} className="sold-item"><div style={{display: 'flex', flexDirection: 'column'}}><span>{t.name}</span><small style={{fontSize: '0.7rem', color: t.squad.length >= state.playersPerTeam ? '#ef4444' : '#64748b'}}>Squad: {t.squad.length}/{state.playersPerTeam}</small></div><b>{formatK(t.budget)}</b></div>))}</div></div>
         </div>
       </main>
