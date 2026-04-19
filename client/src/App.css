@@ -1144,3 +1144,18 @@ main { display: flex; flex: 1; overflow: hidden; }
 .auction-item-card.live {
   border-left: 4px solid var(--success);
 }
+
+.download-btn {
+  background: var(--success) !important;
+  color: white !important;
+  font-weight: bold;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.download-btn:hover {
+  opacity: 0.9;
+}

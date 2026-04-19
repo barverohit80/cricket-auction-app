@@ -101,6 +101,19 @@ function App() {
 
   const logout = () => { sessionStorage.clear(); window.location.reload(); };
 
+  const downloadPDF = async () => {
+    const element = document.getElementById('report-content');
+    if (!element) return;
+    const canvas = await html2canvas(element, { scale: 2 });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const imgProps = pdf.getImageProperties(imgData);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    pdf.save(`${state.tournamentName}_Report.pdf`);
+  };
+
   if (!role) return (
     <div className="login-screen">
       <h1>Welcome to Auction</h1>
@@ -337,8 +350,15 @@ function App() {
   if (state.isEnded) {
     return (
       <div className="report-screen">
-        <header><h1>AUCTION COMPLETED</h1><div className="header-actions">{role === 'admin' && <button onClick={() => setAdminView('menu')}>Back to Hub</button>}<button onClick={logout}>Logout</button></div></header>
-        <div className="report-grid">
+        <header>
+          <h1>AUCTION COMPLETED</h1>
+          <div className="header-actions">
+            <button className="download-btn" onClick={downloadPDF}>Download PDF 📥</button>
+            {role === 'admin' && <button onClick={() => setAdminView('menu')}>Back to Hub</button>}
+            <button onClick={logout}>Logout</button>
+          </div>
+        </header>
+        <div className="report-grid" id="report-content">
           {teams.map((t: any) => (
             <div key={t.id} className="team-report-card">
               <h2>{t.name}</h2><p className="purse">Remaining Purse: {formatK(t.budget)}</p>
