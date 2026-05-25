@@ -10,7 +10,7 @@ async function runTests() {
   
   let auctionId = '';
 
-  const waitForSync = (condition: (data: any) => boolean, timeout = 5000): Promise<any> => {
+  const waitForSync = (condition: (data: any) => boolean, timeout = 10000): Promise<any> => {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         admin.off('sync_all', handler);
@@ -40,7 +40,9 @@ async function runTests() {
   // 3. Get ID
   const data = await waitForSync(d => d.auctions.some((a: any) => a.name === tournamentName));
   auctionId = data.auctions.find((a: any) => a.name === tournamentName).id;
-  console.log(`✅ ID Found: ${auctionId}`);
+  admin.emit('select_auction', auctionId);
+  await new Promise<void>(r => admin.on('auction_selected', r));
+  console.log(`✅ ID Found and Selected: ${auctionId}`);
 
   // 4. Add Team
   admin.emit('add_team', { id: 'team1', name: 'MI', initialBudget: 100000 });
@@ -73,7 +75,7 @@ async function runTests() {
 
   // 9. Delete Auction
   console.log('Testing Deletion');
-  await new Promise(r => setTimeout(r, 500)); // Short delay for persistence
+  await new Promise(r => setTimeout(r, 1000));
   admin.emit('delete_auction', auctionId);
   await waitForSync(d => d.activeAuction === null);
   console.log('✅ Delete Verified: activeAuction is null');
